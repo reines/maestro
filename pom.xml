@@ -17,6 +17,10 @@
     <description>A Java library for controlling Pololu Maestro Servo controllers.</description>
     <url>https://github.com/reines/maestro</url>
 
+    <properties>
+        <jdk.version>1.5</jdk.version>
+    </properties>
+
     <modules>
         <module>maestro-core</module>
         <module>maestro-usb4java</module>
@@ -48,4 +52,18 @@
         <connection>scm:git:git://github.com/reines/maestro.git</connection>
         <developerConnection>scm:git:git@github.com:reines/maestro.git</developerConnection>
     </scm>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.3.2</version>
+                <configuration>
+                    <source>${jdk.version}</source>
+                    <target>${jdk.version}</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>
