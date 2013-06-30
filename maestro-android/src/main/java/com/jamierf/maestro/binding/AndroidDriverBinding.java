@@ -1,25 +1,61 @@
 package com.jamierf.maestro.binding;
 
+import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbManager;
+import com.jamierf.maestro.api.Product;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class AndroidDriverBinding implements DriverBinding {
 
-    public static AndroidDriverBinding bindToDevice(Context context, int vendorId, int productId) {
+    private static final String ACTION_USB_PERMISSION = AndroidDriverBinding.class.getPackage() + ".USB_PERMISSION";
+
+    public static AndroidDriverBinding bindToDevice(Context context, Product product) {
         final UsbManager manager = (UsbManager) context.getSystemService(Context.USB_SERVICE);
 
+        final CountDownLatch latch = new CountDownLatch(1);
+        final AtomicReference<AndroidDriverBinding> result = new AtomicReference(null);
+
         final Map<String, UsbDevice> devices = manager.getDeviceList();
-        for (UsbDevice device : devices.values()) {
-            if (device.getVendorId() == vendorId && device.getProductId() == productId)
-                return new AndroidDriverBinding(manager, device);
+        for (final UsbDevice device : devices.values()) {
+            if (device.getVendorId() == product.getVendorId() && device.getProductId() == product.getProductId()) {
+                context.registerReceiver(new BroadcastReceiver() {
+                    @Override
+                    public void onReceive(Context context, Intent intent) {
+                        if (!ACTION_USB_PERMISSION.equals(intent.getAction())) {
+                            latch.countDown();
+                            return;
+                        }
+
+                        result.set(new AndroidDriverBinding(manager, device));
+                        latch.countDown();
+                    }
+                }, new IntentFilter(ACTION_USB_PERMISSION));
+                manager.requestPermission(device, PendingIntent.getBroadcast(context, 0, new Intent(ACTION_USB_PERMISSION), 0));
+
+                try {
+                    latch.await();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+                break;
+            }
         }
 
-        throw new RuntimeException("Unable to find USB device");
+        final AndroidDriverBinding driver = result.get();
+        if (driver == null)
+            throw new RuntimeException("Unable to find USB device");
+
+        return driver;
     }
 
     private final UsbManager manager;
