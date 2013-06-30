@@ -12,7 +12,6 @@
 
     <properties>
         <usb4java.version>1.0.0</usb4java.version>
-        <logback.version>1.0.13</logback.version>
     </properties>
 
     <dependencies>
@@ -25,12 +24,6 @@
             <groupId>de.ailis.usb4java</groupId>
             <artifactId>usb4java</artifactId>
             <version>${usb4java.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>${logback.version}</version>
-            <scope>runtime</scope>
         </dependency>
     </dependencies>
 
