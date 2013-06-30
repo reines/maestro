@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <artifactId>maestro-parent</artifactId>
+        <groupId>com.jamierf.maestro</groupId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>maestro-android</artifactId>
+
+    <properties>
+        <android.version>4.0.1.2</android.version>
+        <slf4j-android.version>1.6.1-RC1</slf4j-android.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.jamierf.maestro</groupId>
+            <artifactId>maestro-core</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.android</groupId>
+            <artifactId>android</artifactId>
+            <version>${android.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-android</artifactId>
+            <version>${slf4j-android.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+    </dependencies>
+</project>
