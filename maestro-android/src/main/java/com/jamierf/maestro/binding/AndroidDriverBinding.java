@@ -1,29 +1,26 @@
 package com.jamierf.maestro.binding;
 
+import android.content.Context;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbManager;
 
 import java.nio.ByteBuffer;
+import java.util.Map;
 
 public class AndroidDriverBinding implements DriverBinding {
 
-//    public static Collection<UsbDevice> findDevices(UsbManager manager) {
-//        final ImmutableSet.Builder<UsbDevice> controllers = ImmutableSet.builder();
-//
-//        final Map<String, UsbDevice> devices = manager.getDeviceList();
-//        for (UsbDevice device : devices.values()) {
-//            final Optional<Product> product = Product.fromDevice(device);
-//
-//            // Skip unrecognised devices
-//            if (!product.isPresent())
-//                continue;
-//
-//            controllers.add(device);
-//        }
-//
-//        return controllers.build();
-//    }
+    public static AndroidDriverBinding bindToDevice(Context context, int vendorId, int productId) {
+        final UsbManager manager = (UsbManager) context.getSystemService(Context.USB_SERVICE);
+
+        final Map<String, UsbDevice> devices = manager.getDeviceList();
+        for (UsbDevice device : devices.values()) {
+            if (device.getVendorId() == vendorId && device.getProductId() == productId)
+                return new AndroidDriverBinding(manager, device);
+        }
+
+        throw new RuntimeException("Unable to find USB device");
+    }
 
     private final UsbManager manager;
     private final UsbDevice device;
