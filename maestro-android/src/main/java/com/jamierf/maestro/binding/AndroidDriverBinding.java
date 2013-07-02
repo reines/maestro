@@ -10,52 +10,48 @@ import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbManager;
 import com.jamierf.maestro.api.Product;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class AndroidDriverBinding implements DriverBinding {
 
     private static final String ACTION_USB_PERMISSION = AndroidDriverBinding.class.getPackage() + ".USB_PERMISSION";
 
-    public static AndroidDriverBinding bindToDevice(Context context, Product product) {
+    public static void bindToDevice(Context context, Product product, AsyncBindingListener listener) {
+        try {
+            final UsbManager manager = (UsbManager) context.getSystemService(Context.USB_SERVICE);
+
+            final Map<String, UsbDevice> devices = manager.getDeviceList();
+            for (final UsbDevice device : devices.values()) {
+                if (device.getVendorId() == product.getVendorId() && device.getProductId() == product.getProductId()) {
+                    AndroidDriverBinding.bindToDevice(context, device, listener);
+                    return;
+                }
+            }
+
+            throw new IOException("Unable to find USB device.");
+        } catch (Exception e) {
+            listener.onException(e);
+        }
+    }
+
+    private static void bindToDevice(Context context, final UsbDevice device, final AsyncBindingListener listener) {
         final UsbManager manager = (UsbManager) context.getSystemService(Context.USB_SERVICE);
 
-        final CountDownLatch latch = new CountDownLatch(1);
-        final AtomicReference<AndroidDriverBinding> result = new AtomicReference(null);
-
-        final Map<String, UsbDevice> devices = manager.getDeviceList();
-        for (final UsbDevice device : devices.values()) {
-            if (device.getVendorId() == product.getVendorId() && device.getProductId() == product.getProductId()) {
-                context.registerReceiver(new BroadcastReceiver() {
-                    @Override
-                    public void onReceive(Context context, Intent intent) {
-                        if (!ACTION_USB_PERMISSION.equals(intent.getAction())) {
-                            latch.countDown();
-                            return;
-                        }
-
-                        result.set(new AndroidDriverBinding(manager, device));
-                        latch.countDown();
-                    }
-                }, new IntentFilter(ACTION_USB_PERMISSION));
-                manager.requestPermission(device, PendingIntent.getBroadcast(context, 0, new Intent(ACTION_USB_PERMISSION), 0));
-
-                try {
-                    latch.await();
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
+        context.registerReceiver(new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (!ACTION_USB_PERMISSION.equals(intent.getAction())) {
+                    listener.onException(new IOException("No permission to access USB device."));
+                    return;
                 }
-                break;
+
+                listener.onBind(device.getVendorId(), device.getProductId(), new AndroidDriverBinding(manager, device));
             }
-        }
+        }, new IntentFilter(ACTION_USB_PERMISSION));
 
-        final AndroidDriverBinding driver = result.get();
-        if (driver == null)
-            throw new RuntimeException("Unable to find USB device");
-
-        return driver;
+        manager.requestPermission(device, PendingIntent.getBroadcast(context, 0, new Intent(ACTION_USB_PERMISSION), 0));
     }
 
     private final UsbManager manager;
@@ -70,7 +66,7 @@ public class AndroidDriverBinding implements DriverBinding {
 
     @Override
     public ByteBuffer allocateBuffer(int length) {
-        return ByteBuffer.allocate(length);
+        return ByteBuffer.wrap(new byte[length]);
     }
 
     private synchronized UsbDeviceConnection getConnection() {
@@ -100,6 +96,9 @@ public class AndroidDriverBinding implements DriverBinding {
     public int controlTransfer(int requestType, int request, int value, int index, ByteBuffer buffer, int timeout) {
         if (buffer == null)
             buffer = this.allocateBuffer(0);
+
+        if (!buffer.hasArray())
+            throw new IllegalArgumentException("Buffer must be array based (should be allocated using allocateBuffer(int)).");
 
         final byte[] bytes = buffer.array();
 
