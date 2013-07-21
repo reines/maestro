@@ -74,6 +74,14 @@ public class MaestroServoController implements Closeable {
         return firmwareVersion;
     }
 
+    public Product getProduct() {
+        return product;
+    }
+
+    public Settings getSettings() {
+        return settings;
+    }
+
     private void setParameter(Parameter parameter, int value) {
         final byte code = parameter.getCode();
         final Parameter.Range range = parameter.getRange();
