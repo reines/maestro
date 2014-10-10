@@ -8,4 +8,5 @@ A Java library for controlling [Pololu Maestro Servo controllers](http://www.pol
 - Modular driver implementations, supporting libusb (maestro-usb4java) and Android (maestro-android).
 
 ## License
-The MaestroServoController library is released under the BSD 3-clause license.
+
+Released under the [Apache 2.0 License](LICENSE).
