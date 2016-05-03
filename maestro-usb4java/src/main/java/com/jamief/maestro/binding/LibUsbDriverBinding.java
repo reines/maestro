@@ -3,7 +3,8 @@ package com.jamief.maestro.binding;
 import com.jamierf.maestro.api.Product;
 import com.jamierf.maestro.binding.AsyncBindingListener;
 import com.jamierf.maestro.binding.DriverBinding;
-import de.ailis.usb4java.libusb.*;
+import org.usb4java.*;
+
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -14,8 +15,7 @@ public class LibUsbDriverBinding implements DriverBinding {
         try {
             final Context context = new Context();
             LibUsb.init(context);
-
-            final DeviceHandle handle = LibUsb.openDeviceWithVidPid(context, product.getVendorId(), product.getProductId());
+            final DeviceHandle handle = LibUsb.openDeviceWithVidPid(context, (short)product.getVendorId(), (short)product.getProductId());
             if (handle == null)
                 throw new RuntimeException("Unable to find USB device");
 
@@ -63,8 +63,7 @@ public class LibUsbDriverBinding implements DriverBinding {
     public int controlTransfer(int type, int request, int value, int index, ByteBuffer buffer, int timeout) throws IOException {
         if (buffer == null)
             buffer = this.allocateBuffer(0);
-
-        final int read = LibUsb.controlTransfer(handle, type, request, value, index, buffer, timeout);
+        final int read = LibUsb.controlTransfer(handle, (byte)type, (byte)request, (short)value, (short)index, buffer, timeout);
         if (read >= 0)
             return read;
 
